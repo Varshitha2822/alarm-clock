@@ -1,0 +1,24 @@
+🕒 Enhanced Alarm Clock – Desktop Reminder App
+This is a Python-based alarm clock built using the tkinter GUI library. It provides an intuitive and interactive interface to set, stop, and snooze alarms with several useful features:
+
+🔧 Key Features:
+Set Custom Alarms: Choose the exact hour, minute, and second for the alarm.
+
+Live Clock Display: Real-time digital clock updates every second.
+
+Sound Alerts: Optional alarm sound using winsound (requires sound.wav in the same directory).
+
+Snooze Functionality: Quickly delay the alarm by 5 minutes with a single click.
+
+Repeat Daily Option: Enable daily repetition of the alarm at the same time.
+
+User-Friendly Controls: Start, stop, and snooze buttons along with toggle switches for sound and repeat.
+
+💡 How It Works:
+Select the desired time using dropdowns.
+
+Click "Set Alarm" to activate it.
+
+When the time matches, the app displays a "WAKE UP" message and plays an alert.
+
+You can stop the alarm or snooze it for 5 more minutes.
