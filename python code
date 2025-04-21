@@ -1,0 +1,110 @@
+from tkinter import *
+from threading import Thread
+from datetime import datetime, timedelta
+import time, winsound, os
+
+# --- Setup ---
+root = Tk()
+root.title("Enhanced Alarm Clock")
+root.geometry("360x400")
+root.resizable(False, False)
+
+# --- Variables ---
+hour, minute, second = StringVar(), StringVar(), StringVar()
+alarm_running = False
+stop_alarm_flag = False
+sound_enabled = BooleanVar(value=True)
+repeat_alarm = BooleanVar(value=False)
+snooze_minutes = 5
+
+# --- Functions ---
+def create_dropdown(var, values):
+    var.set(values[0])
+    OptionMenu(frame, var, *values).pack(side=LEFT, padx=2)
+
+def update_clock():
+    current = datetime.now().strftime("%H:%M:%S")
+    clock_label.config(text=f"🕒 Current Time: {current}")
+    root.after(1000, update_clock)
+
+def play_sound_loop():
+    if sound_enabled.get() and os.path.exists("sound.wav"):
+        while not stop_alarm_flag:
+            winsound.PlaySound("sound.wav", winsound.SND_FILENAME)
+            time.sleep(1)
+
+def alarm():
+    global alarm_running, stop_alarm_flag
+    alarm_running = True
+    set_time = f"{hour.get()}:{minute.get()}:{second.get()}"
+    status.config(text=f"🔔 Alarm set for {set_time}", fg="blue")
+
+    while not stop_alarm_flag:
+        current = datetime.now().strftime("%H:%M:%S")
+        if current == set_time:
+            status.config(text="⏰ WAKE UP!", fg="red")
+            Thread(target=play_sound_loop, daemon=True).start()
+            break
+        time.sleep(1)
+
+    if repeat_alarm.get() and not stop_alarm_flag:
+        # Wait 24 hours and restart the alarm
+        next_time = datetime.strptime(set_time, "%H:%M:%S") + timedelta(days=1)
+        while not stop_alarm_flag:
+            now = datetime.now()
+            wait_time = (next_time - now).total_seconds()
+            if wait_time <= 0:
+                break
+            time.sleep(min(wait_time, 60))
+        if not stop_alarm_flag:
+            Thread(target=alarm, daemon=True).start()
+    else:
+        alarm_running = False
+
+def start_alarm():
+    global stop_alarm_flag
+    stop_alarm_flag = False
+    if not alarm_running:
+        Thread(target=alarm, daemon=True).start()
+
+def stop_alarm():
+    global stop_alarm_flag, alarm_running
+    stop_alarm_flag = True
+    alarm_running = False
+    winsound.PlaySound(None, winsound.SND_PURGE)
+    status.config(text="⛔ Alarm stopped", fg="black")
+
+def snooze():
+    if alarm_running:
+        stop_alarm()
+        future_time = (datetime.now() + timedelta(minutes=snooze_minutes)).strftime("%H:%M:%S")
+        h, m, s = future_time.split(":")
+        hour.set(h)
+        minute.set(m)
+        second.set(s)
+        status.config(text=f"😴 Snoozed for {snooze_minutes} min (New Time: {future_time})", fg="orange")
+        root.after(1000, start_alarm)
+
+# --- GUI Elements ---
+clock_label = Label(root, font=("Helvetica", 16))
+clock_label.pack(pady=10)
+update_clock()
+
+frame = Frame(root)
+frame.pack(pady=5)
+create_dropdown(hour, [f"{i:02}" for i in range(24)])
+create_dropdown(minute, [f"{i:02}" for i in range(60)])
+create_dropdown(second, [f"{i:02}" for i in range(60)])
+
+Button(root, text="Set Alarm", width=20, command=start_alarm).pack(pady=5)
+Button(root, text="Stop Alarm", width=20, command=stop_alarm).pack(pady=5)
+Button(root, text="Snooze 5 Minutes", width=20, command=snooze).pack(pady=5)
+
+Checkbutton(root, text="🔊 Enable Sound", variable=sound_enabled).pack(pady=5)
+Checkbutton(root, text="🔁 Repeat Daily", variable=repeat_alarm).pack(pady=5)
+
+status = Label(root, text="", font=("Helvetica", 12))
+status.pack(pady=10)
+
+# --- Start GUI Loop ---
+root.mainloop()
